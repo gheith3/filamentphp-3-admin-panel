@@ -1,209 +1,367 @@
-# Laravel 12 + FilamentPHP 3 Admin Panel
+# Laravel 12 + FilamentPHP 3 Admin Panel Starter Kit
 
-A comprehensive admin panel built with Laravel 12 and FilamentPHP 3, featuring user management, role-based permissions, system monitoring, backup management, and Docker deployment.
+A modern, production-ready Laravel 12 starter kit featuring FilamentPHP 3 admin panel, user management, role-based permissions, system monitoring, and comprehensive security features. Perfect for kickstarting your next Laravel project with a powerful admin interface.
 
 ## 🚀 Features
 
-### Core Features
+### Core Laravel 12 Features
 
--   **Laravel 12** - Latest Laravel framework with modern PHP 8.2+ features
--   **FilamentPHP 3** - Modern admin panel interface with rich components
--   **User Management** - Complete CRUD operations for users
--   **Role & Permission System** - Advanced role-based access control using Spatie Laravel Permission
+-   **Laravel 12** - Latest Laravel framework with modern PHP 8.2+ features and performance improvements
+-   **FilamentPHP 3** - Modern admin panel interface with rich components and beautiful UI
+-   **Authentication System** - Complete authentication flow with login, registration, and password reset
+-   **User Management** - Full CRUD operations for users with profile management
+-   **Role & Permission System** - Advanced RBAC using Spatie Laravel Permission
+-   **Modern Frontend** - Vite build system with Tailwind CSS 4.0
+
+### Admin Panel Features
+
+-   **Dashboard** - Comprehensive dashboard with widgets and system overview
 -   **User Profile Management** - Self-service profile editing with avatar support
--   **Authentication** - Secure login system with session management
-
-### System Management
-
--   **System Health Monitoring** - Real-time system metrics and health checks
+-   **Role & Permission Management** - Granular permission system for resources and pages
+-   **System Monitoring** - Real-time system health checks and performance metrics
 -   **Backup Management** - Automated backup system for database and files
--   **Performance Monitoring** - Track system performance and resource usage
 -   **Security Features** - Enhanced security configuration and rate limiting
 
-### Additional Features
+### Developer Experience
 
 -   **Docker Ready** - Complete Docker setup with MariaDB and Redis
 -   **Response Caching** - Optimized performance with Laravel Response Cache
--   **Modern UI** - Beautiful and responsive admin interface
--   **Command Line Tools** - Artisan commands for system health and backups
--   **Testing Framework** - PestPHP testing setup
+-   **Testing Framework** - PestPHP testing setup with examples
+-   **Code Quality** - Laravel Pint for code formatting
+-   **Modern UI Components** - Beautiful and responsive admin interface
+
+## 📦 Included Packages
+
+### Core Admin Panel
+
+-   **[FilamentPHP 3](https://filamentphp.com/)** (`filament/filament: ^3.3`)
+    -   Modern admin panel framework
+    -   Rich component library
+    -   Beautiful, responsive UI
+    -   Built-in form builder and table builder
+    -   Dashboard with widgets
+
+### User Management & Authentication
+
+-   **[Filament Users](https://github.com/tomatophp/filament-users)** (`tomatophp/filament-users: ^2.0`)
+
+    -   Enhanced user management interface
+    -   User CRUD operations
+    -   Advanced user filtering and search
+    -   User activity tracking
+
+-   **[Filament Edit Profile](https://github.com/joaopaulolndev/filament-edit-profile)** (`joaopaulolndev/filament-edit-profile: ^1.0`)
+    -   Self-service profile editing
+    -   Avatar management
+    -   Password change functionality
+    -   Browser session management
+
+### Security & Permissions
+
+-   **[Filament Shield](https://github.com/bezhanSalleh/filament-shield)** (`bezhansalleh/filament-shield: ^3.3`)
+    -   Role and permission management for Filament
+    -   Resource-level permissions
+    -   Page-level permissions
+    -   Widget-level permissions
+    -   Built on Spatie Laravel Permission
+
+### Performance & Optimization
+
+-   **[Laravel Response Cache](https://github.com/spatie/laravel-responsecache)** (`spatie/laravel-responsecache: ^7.7`)
+    -   Response caching for improved performance
+    -   Configurable cache rules
+    -   Cache invalidation strategies
+    -   Performance monitoring
+
+### Development Tools
+
+-   **[Laravel Tinker](https://github.com/laravel/tinker)** (`laravel/tinker: ^2.10.1`) - Interactive PHP REPL
+-   **[Laravel Pint](https://github.com/laravel/pint)** (`laravel/pint: ^1.13`) - Code style fixer
+-   **[PestPHP](https://pestphp.com/)** (`pestphp/pest: ^3.8`) - Modern testing framework
 
 ## 📋 Requirements
 
--   PHP 8.2 or higher
--   Composer
--   Node.js 18+ and NPM
--   Docker & Docker Compose (for containerized deployment)
--   MySQL/MariaDB or SQLite
+-   **PHP 8.2+** - Laravel 12 minimum requirement
+-   **Composer 2.0+** - Dependency management
+-   **Node.js 18+** and NPM - Frontend build tools
+-   **MySQL 8.0+** / **MariaDB 10.3+** / **PostgreSQL 13+** / **SQLite 3.35+**
+-   **Redis** (optional, recommended for caching and sessions)
+-   **Docker & Docker Compose** (optional, for containerized deployment)
 
-## 🛠️ Installation
+## 🛠️ Quick Start
 
-### Method 1: Docker Setup (Recommended)
+### Option 1: Use as Template (Recommended)
 
-1. **Clone the repository**
+Create a new project based on this starter kit:
 
 ```bash
-git clone <repository-url>
-cd filamentphp-3-admin-panel
+# Clone the repository
+git clone <repository-url> my-new-project
+cd my-new-project
+
+# Remove git history and start fresh
+rm -rf .git
+git init
+git add .
+git commit -m "Initial commit from Laravel 12 starter kit"
+
+# Set up your project
+composer run setup
+npm install && npm run build
 ```
 
-2. **Start with Docker Compose**
+### Option 2: Docker Development
+
+Start developing immediately with Docker:
 
 ```bash
+git clone <repository-url> my-new-project
+cd my-new-project
 docker-compose up -d
+
+# Access admin panel at http://localhost:8100/admin
+# Default login: admin@admin.com / P@ssw0rd
 ```
 
-3. **Access the application**
+### Option 3: Local Development Setup
 
--   Admin Panel: http://localhost:8100/admin
--   Default credentials: `admin@admin.com` / `P@ssw0rd`
-
-The Docker setup includes:
-
--   **Laravel App**: Available on port 8100
--   **MariaDB**: Available on port 3307
--   **Redis**: Available on port 6379
-
-### Method 2: Local Development Setup
-
-1. **Clone and install dependencies**
+For local development without Docker:
 
 ```bash
-git clone <repository-url>
-cd filamentphp-3-admin-panel
+# Clone and install dependencies
+git clone <repository-url> my-laravel-app
+cd my-laravel-app
 composer install
 npm install
-```
 
-2. **Environment setup**
-
-```bash
+# Environment setup
 cp .env.example .env
 php artisan key:generate
+
+# Configure your database in .env file
+# Then run migrations and seeders
+php artisan migrate
+php artisan shield:generate --all
+php artisan db:seed
+
+# Build assets and start development
+npm run build
+php artisan serve
+
+# Access your application at http://localhost:8000/admin
 ```
 
-3. **Configure your `.env` file**
+## ⚙️ Configuration
+
+### Environment Variables
+
+Key configuration options in your `.env` file:
 
 ```env
-APP_NAME="Admin Panel"
+# Application
+APP_NAME="Your App Name"
 APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://localhost:8000
 
+# Database
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=admin_panel
-DB_USERNAME=root
-DB_PASSWORD=
+DB_DATABASE=your_database
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
 
+# Cache & Sessions (Redis recommended)
 CACHE_STORE=redis
 SESSION_DRIVER=database
-QUEUE_CONNECTION=database
-
 REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
+
+# Mail Configuration
+MAIL_MAILER=smtp
+MAIL_FROM_ADDRESS="noreply@yourapp.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+# Security
+SESSION_SECURE_COOKIE=false
+CORS_ALLOWED_ORIGINS=
+THROTTLE_REQUESTS=60
+THROTTLE_DECAY_MINUTES=1
+
+# Backup
+BACKUP_DISK=local
+BACKUP_DB_TIMEOUT=300
+BACKUP_FILES_TIMEOUT=600
 ```
 
-4. **Database setup**
+### Admin Panel Customization
+
+Customize the FilamentPHP admin panel in `app/Providers/Filament/AdminPanelProvider.php`:
+
+```php
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->default()
+        ->id('admin')
+        ->path('admin')
+        ->colors([
+            'primary' => Color::Blue, // Change primary color
+        ])
+        ->brandLogo(asset('images/logo.png')) // Add your logo
+        // ... additional customizations
+}
+```
+
+## 🎯 Pre-built Features
+
+### Authentication System
+
+-   **Login/Logout** - Secure authentication flow
+-   **Password Reset** - Email-based password recovery
+-   **Remember Me** - Persistent sessions
+-   **Session Management** - Multiple device handling
+-   **Rate Limiting** - Brute force protection
+
+### User Management
+
+-   **User CRUD** - Complete user management interface
+-   **Profile Management** - Self-service profile editing
+-   **Avatar Upload** - User profile pictures
+-   **Role Assignment** - Assign roles to users
+-   **Permission Management** - Granular permissions
+
+### Role-Based Access Control (RBAC)
+
+-   **Roles** - Create and manage user roles
+-   **Permissions** - Granular permission system
+-   **Resource Protection** - Secure admin resources
+-   **Page Protection** - Protect custom pages
+-   **Widget Protection** - Secure dashboard widgets
+
+### Dashboard & Monitoring
+
+-   **System Health Widget** - Real-time system metrics
+-   **Performance Monitoring** - Track application performance
+-   **Database Health** - Monitor database status
+-   **Cache Status** - Check cache functionality
+-   **Memory Usage** - Track memory consumption
+
+### Backup System
+
+-   **Database Backups** - Automated database backups
+-   **File Backups** - Application file backups
+-   **Backup Verification** - Integrity checks
+-   **Backup Management** - View and manage backups
+-   **Automated Cleanup** - Remove old backups
+
+### Security Features
+
+-   **Rate Limiting** - Multiple rate limiting strategies
+-   **CSRF Protection** - Built-in CSRF protection
+-   **Input Validation** - Comprehensive input sanitization
+-   **Security Headers** - Security-focused HTTP headers
+-   **Session Security** - Secure session configuration
+
+## 🔧 What's Included
+
+### File Structure
+
+```
+app/
+├── Filament/
+│   ├── Pages/           # Custom admin pages
+│   ├── Resources/       # Admin resources
+│   └── Widgets/         # Dashboard widgets
+├── Http/
+│   ├── Controllers/     # HTTP controllers
+│   └── Middleware/      # Custom middleware
+├── Models/              # Eloquent models
+├── Policies/            # Authorization policies
+├── Providers/           # Service providers
+└── Services/            # Business logic services
+```
+
+### Key Configuration Files
+
+-   `config/filament-shield.php` - Permission settings
+-   `config/filament-users.php` - User management configuration
+-   `config/backup.php` - Backup system settings
+-   `config/security.php` - Security and rate limiting
+-   `config/responsecache.php` - Response cache configuration
+
+## 🎯 Usage & Customization
+
+### Creating New Admin Resources
+
+Generate a new Filament resource for your models:
 
 ```bash
-php artisan migrate 
-php artisan shield:generate --all
-php artisan db:seed
+php artisan make:filament-resource Product
+
+# With pages
+php artisan make:filament-resource Product --generate
+
+# With soft deletes
+php artisan make:filament-resource Product --soft-deletes
 ```
 
-5. **Build assets and start development**
+### Adding New Permissions
+
+Add permissions for your new resources:
 
 ```bash
-npm run build
-php artisan optimize
-php artisan icons:cache
-php artisan serve
+php artisan shield:generate --resource=ProductResource
 ```
 
-6. **Access the application**
+### Custom Admin Pages
 
--   Admin Panel: http://localhost:8000/admin
--   Default credentials: `admin@admin.com` / `P@ssw0rd`
-
-## 🎯 Usage
-
-### Admin Panel Features
-
-#### User Management
-
--   Navigate to **Settings > Users** to manage system users
--   Create, edit, and delete users
--   Assign roles and permissions
--   View user activity and profiles
-
-#### Role & Permission Management
-
--   Access **Shield > Roles** for role management
--   Create custom roles with specific permissions
--   Assign permissions for resources, pages, and widgets
--   Super Admin role has full system access
-
-#### System Monitoring
-
--   **System Health** page provides real-time metrics:
-    -   CPU and memory usage
-    -   Database performance
-    -   Cache status
-    -   Security checks
-
-#### Backup Management
-
--   **Backup Management** page allows:
-    -   Create full system backups
-    -   Database-only backups
-    -   View backup history
-    -   Download backup files
-
-#### Profile Management
-
--   Users can edit their own profiles via the user menu
--   Update personal information
--   Change passwords
--   Manage browser sessions
-
-### Command Line Tools
-
-#### System Health Check
+Create custom admin pages:
 
 ```bash
-# Basic health check
-php artisan system:health
-
-# Detailed metrics
-php artisan system:health --detailed
-
-# JSON output
-php artisan system:health --json
-
-# Specific checks
-php artisan system:health --check=database --check=cache
+php artisan make:filament-page Settings
 ```
 
-#### Backup Operations
+### Dashboard Widgets
+
+Create dashboard widgets:
 
 ```bash
-# Create full backup
-php artisan backup:run
-
-# Database only backup
-php artisan backup:run --type=database
-
-# Backup with verification
-php artisan backup:run --verify
-
-# Backup with cleanup of old files
-php artisan backup:run --cleanup
+php artisan make:filament-widget StatsOverview --stats-overview
 ```
 
-#### Development Commands
+### Adding Your Models and Resources
+
+**Create a new model and resource:**
+
+```bash
+# Create model with migration
+php artisan make:model Product -m
+
+# Create Filament resource
+php artisan make:filament-resource Product --generate
+
+# Add permissions for the resource
+php artisan shield:generate --resource=ProductResource
+```
+
+**Example Product model:**
+
+```php
+// app/Models/Product.php
+class Product extends Model
+{
+    protected $fillable = ['name', 'description', 'price', 'is_active'];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'is_active' => 'boolean',
+    ];
+}
+```
+
+## 🔧 Development Workflow
+
+### Daily Development Commands
 
 ```bash
 # Start development environment
@@ -212,194 +370,246 @@ composer run dev
 # Run tests
 composer run test
 
-# Clear all caches
+# Check code style
+./vendor/bin/pint
+
+# Clear caches (if needed)
 php artisan optimize:clear
 ```
 
-## 🔧 Configuration
+### Key Artisan Commands
 
-### Key Configuration Files
+**System Commands:**
 
--   **`config/filament-shield.php`** - Role and permission settings
--   **`config/filament-users.php`** - User management configuration
--   **`config/backup.php`** - Backup system settings
--   **`config/security.php`** - Security and rate limiting
--   **`config/database.php`** - Database connections
-
-### Important Environment Variables
-
-```env
-# Application
-APP_NAME="Your Admin Panel"
-APP_URL=http://your-domain.com
-
-# Database
-DB_CONNECTION=mariadb
-DB_HOST=database
-DB_DATABASE=admin_panel
-DB_USERNAME=root
-DB_PASSWORD=password
-
-# Cache & Sessions
-CACHE_STORE=redis
-SESSION_DRIVER=database
-REDIS_HOST=redis
-
-# Security
-SESSION_SECURE_COOKIE=true
-SESSION_ENCRYPT=true
-
-# Backup
-BACKUP_DISK=local
-BACKUP_RETENTION_DAYS=30
-
-# Rate Limiting
-THROTTLE_REQUESTS=60
-THROTTLE_DECAY_MINUTES=1
+```bash
+php artisan system:health              # Check system health
+php artisan system:health --detailed   # Detailed health check
+php artisan system:health --json       # JSON output
 ```
 
-## 🏗️ Architecture
+**Backup Commands:**
 
-### Directory Structure
-
-```
-app/
-├── Console/Commands/      # Custom artisan commands
-├── Filament/
-│   ├── Pages/            # Custom Filament pages
-│   ├── Resources/        # Filament resources
-│   └── Widgets/          # Dashboard widgets
-├── Http/
-│   ├── Controllers/      # HTTP controllers
-│   └── Middleware/       # Custom middleware
-├── Models/               # Eloquent models
-├── Policies/             # Authorization policies
-├── Providers/            # Service providers
-└── Services/             # Business logic services
+```bash
+php artisan backup:run                 # Create full backup
+php artisan backup:run --type=database # Database only
+php artisan backup:run --verify        # Backup with verification
+php artisan backup:run --cleanup       # Backup with cleanup
 ```
 
-### Key Components
+**Development Commands:**
 
--   **FilamentPHP 3** - Admin panel framework
--   **Spatie Laravel Permission** - Role and permission management
--   **Laravel Response Cache** - Performance optimization
--   **TomatoPHP Filament Users** - Enhanced user management
--   **Filament Shield** - Permission management for Filament
--   **Filament Edit Profile** - User profile management
+```bash
+composer run dev                       # Start development environment
+composer run test                      # Run test suite
+composer run fresh                     # Fresh migration with seed
+composer run setup                     # Complete setup
+```
 
-## 🔒 Security Features
+### Database Changes
 
--   **Role-based Access Control** - Granular permissions system
--   **Rate Limiting** - API and form submission protection
--   **Session Security** - Secure session handling
--   **Input Validation** - Comprehensive input sanitization
--   **CSRF Protection** - Built-in Laravel CSRF protection
--   **Password Hashing** - Secure password storage
+```bash
+# Create migration
+php artisan make:migration create_products_table
 
-## 📊 Monitoring & Health Checks
+# Run migrations
+php artisan migrate
 
-### System Metrics
-
--   CPU usage and load average
--   Memory consumption
--   Disk space utilization
--   Database connection status
--   Cache performance
--   Queue status
-
-### Health Check Endpoints
-
-The system includes automated health checks for:
-
--   Database connectivity
--   Cache functionality
--   File system permissions
--   Security configuration
--   Performance metrics
-
-## 🔄 Backup System
-
-### Backup Types
-
--   **Full Backup** - Complete system backup including database and files
--   **Database Backup** - Database only with compression
--   **Files Backup** - Application files and uploads
--   **Configuration Backup** - Environment and configuration files
-
-### Backup Features
-
--   Automatic compression (configurable level 1-9)
--   Backup verification and integrity checks
--   Retention policy management
--   Storage to multiple disks
--   Backup restoration capabilities
+# If you need to start fresh
+composer run fresh
+```
 
 ## 🧪 Testing
 
-The project includes a comprehensive testing setup using PestPHP:
+The starter kit includes PestPHP for testing:
 
 ```bash
 # Run all tests
 php artisan test
 
 # Run specific test suite
-vendor/bin/pest --testsuite=Feature
-vendor/bin/pest --testsuite=Unit
+./vendor/bin/pest --group=feature
+./vendor/bin/pest --group=unit
 
 # Run with coverage
-vendor/bin/pest --coverage
+./vendor/bin/pest --coverage
 ```
+
+### Test Structure
+
+```
+tests/
+├── Feature/              # Integration tests
+├── Unit/                 # Unit tests
+├── Pest.php             # Pest configuration
+└── TestCase.php         # Base test class
+```
+
+### Adding Tests
+
+```bash
+# Create feature test
+php artisan make:test ProductTest
+
+# Create unit test
+php artisan make:test ProductUnitTest --unit
+
+# Run specific tests
+./vendor/bin/pest --filter=Product
+```
+
+## 🛡️ Security
+
+### Built-in Security Features
+
+-   ✅ CSRF Protection
+-   ✅ SQL Injection Prevention
+-   ✅ XSS Protection
+-   ✅ Rate Limiting
+-   ✅ Input Validation
+-   ✅ Session Security
+-   ✅ Password Hashing
+-   ✅ Secure Headers
+
+### Production Security Checklist
+
+-   [ ] Set `APP_ENV=production`
+-   [ ] Set `APP_DEBUG=false`
+-   [ ] Use HTTPS (`SESSION_SECURE_COOKIE=true`)
+-   [ ] Configure `CORS_ALLOWED_ORIGINS`
+-   [ ] Set up proper database credentials
+-   [ ] Configure mail settings
+-   [ ] Set up backup system
+-   [ ] Configure error logging
+-   [ ] Update default admin credentials
 
 ## 🚀 Deployment
 
-### Production Deployment
-
-1. **Environment Setup**
+### Production Optimization
 
 ```bash
-# Set production environment
-APP_ENV=production
-APP_DEBUG=false
-
-# Configure secure sessions
-SESSION_SECURE_COOKIE=true
-SESSION_ENCRYPT=true
-
-# Set up database
-DB_CONNECTION=mariadb
-DB_HOST=your-db-host
-```
-
-2. **Optimization**
-
-```bash
+# Install production dependencies
 composer install --no-dev --optimize-autoloader
+
+# Build and optimize
 npm run build
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan icons:cache
+
+# Set production environment
+APP_ENV=production
+APP_DEBUG=false
 ```
-
-3. **Security Checklist**
-
--   Enable HTTPS
--   Configure firewall rules
--   Set up regular backups
--   Monitor system health
--   Update dependencies regularly
 
 ### Docker Production
 
 ```bash
 # Build production image
-docker build -t admin-panel:latest .
+docker build -t your-app:latest .
 
 # Run with production settings
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
+### Cloud Platforms
+
+-   **Laravel Forge** - Recommended for easy deployment
+-   **Laravel Vapor** - Serverless deployment on AWS
+-   **DigitalOcean App Platform** - Simple container deployment
+-   **Heroku** - Quick deployment with buildpacks
+
+## 📦 Package Management
+
+### Adding New Packages
+
+```bash
+# Add a new package
+composer require vendor/package-name
+
+# For Filament-specific packages
+composer require filament/package-name
+
+# Update all packages
+composer update
+```
+
+### Recommended Additional Packages
+
+-   **Laravel Sanctum** - API authentication
+-   **Laravel Horizon** - Queue management
+-   **Laravel Telescope** - Debugging assistant
+-   **Spatie Media Library** - File management
+-   **Laravel Excel** - Excel import/export
+
+## 🎨 UI Customization
+
+### Styling Framework
+
+-   **Tailwind CSS 4.0** - Utility-first CSS framework
+-   **Responsive Design** - Mobile-first responsive layout
+-   **Dark Mode Support** - Built-in dark mode toggle
+-   **Custom Color Scheme** - Configurable brand colors
+-   **Icon Library** - Heroicons integration
+
+### FilamentPHP Components
+
+-   **Forms** - Rich form builder with validation
+-   **Tables** - Advanced data tables with filtering
+-   **Notifications** - Toast notifications and alerts
+-   **Modals** - Interactive modal dialogs
+-   **Widgets** - Dashboard widgets and charts
+-   **Navigation** - Sidebar and breadcrumb navigation
+
+### Component Customization
+
+-   Modify Tailwind configuration in `tailwind.config.js`
+-   Customize Filament colors in `AdminPanelProvider`
+-   Add custom CSS in `resources/css/app.css`
+-   Create custom Blade views as needed
+-   Publish Filament views: `php artisan vendor:publish --tag=filament-views`
+
+## 🚀 Performance Features
+
+### Caching Strategy
+
+-   **Response Caching** - Full page caching
+-   **Database Query Caching** - Query result caching
+-   **Redis Integration** - Fast in-memory caching
+-   **View Caching** - Compiled view caching
+-   **Configuration Caching** - Production optimization
+
+### Optimization Features
+
+-   **Lazy Loading** - Efficient resource loading
+-   **Database Indexing** - Optimized database queries
+-   **Asset Compilation** - Minified CSS/JS
+-   **Image Optimization** - Compressed image assets
+-   **HTTP/2 Support** - Modern protocol support
+
+## 📚 Documentation & Learning
+
+### Package Documentation
+
+-   [FilamentPHP Documentation](https://filamentphp.com/docs)
+-   [Laravel 12 Documentation](https://laravel.com/docs/12.x)
+-   [Spatie Permission Documentation](https://spatie.be/docs/laravel-permission/)
+
+### Video Tutorials
+
+-   Laravel Daily YouTube Channel
+-   Filament Daily Content
+-   Laracasts Laravel Content
+
+### Community
+
+-   Laravel Discord
+-   Filament Discord
+-   Reddit r/laravel
+
 ## 🤝 Contributing
+
+If you find issues or want to contribute improvements:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -411,13 +621,13 @@ docker-compose -f docker-compose.prod.yml up -d
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🙏 Acknowledgments
 
--   **Documentation**: Check the inline documentation and comments
--   **Health Monitoring**: Use `php artisan system:health` for diagnostics
--   **Logs**: Check `storage/logs/` for application logs
--   **Debug**: Enable `APP_DEBUG=true` for detailed error messages
+-   [Laravel](https://laravel.com/) - The PHP Framework For Web Artisans
+-   [FilamentPHP](https://filamentphp.com/) - The elegant TALL stack admin panel
+-   [Spatie](https://spatie.be/) - Excellent Laravel packages
+-   All the amazing package contributors
 
 ---
 
-**Built with ❤️ using Laravel 12 and FilamentPHP 3**
+**Ready to build something amazing? Clone this starter kit and get started with Laravel 12 + FilamentPHP 3! 🚀**

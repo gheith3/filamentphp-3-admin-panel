@@ -4,43 +4,48 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Security Headers Configuration
+    | CORS (Cross-Origin Resource Sharing) Settings
     |--------------------------------------------------------------------------
     |
-    | Configure security headers for production deployment to enhance
-    | application security and prevent common web vulnerabilities.
+    | Configure CORS settings for API endpoints and cross-origin requests.
     |
     */
 
-    'headers' => [
-        'hsts' => [
-            'enabled' => env('FORCE_HTTPS', false),
-            'max_age' => env('HSTS_MAX_AGE', 31536000), // 1 year
-            'include_subdomains' => true,
-            'preload' => true,
+    'cors' => [
+        'allowed_origins' => env('APP_ENV') === 'production'
+            ? explode(',', env('CORS_ALLOWED_ORIGINS', ''))
+            : ['*'], // Development allows all origins
+        'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        'allowed_headers' => [
+            'Accept',
+            'Authorization',
+            'Content-Type',
+            'X-Requested-With',
+            'X-CSRF-TOKEN',
+            'X-XSRF-TOKEN',
         ],
-
-        'csp' => [
-            'enabled' => env('CSP_ENABLED', true),
-            'policy' => env(
-                'CONTENT_SECURITY_POLICY',
-                "default-src 'self'; " .
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " .
-                "style-src 'self' 'unsafe-inline'; " .
-                "img-src 'self' data: https:; " .
-                "font-src 'self' data:; " .
-                "connect-src 'self'; " .
-                "media-src 'self'; " .
-                "object-src 'none'; " .
-                "frame-ancestors 'none';"
-            ),
+        'exposed_headers' => [
+            'X-RateLimit-Limit',
+            'X-RateLimit-Remaining',
+            'X-RateLimit-Reset',
         ],
+        'max_age' => env('CORS_MAX_AGE', 3600),
+        'supports_credentials' => env('APP_ENV') === 'production',
+    ],
 
-        'x_frame_options' => 'DENY',
-        'x_content_type_options' => 'nosniff',
-        'x_xss_protection' => '1; mode=block',
-        'referrer_policy' => 'strict-origin-when-cross-origin',
-        'permissions_policy' => 'geolocation=(), microphone=(), camera=()',
+    /*
+    |--------------------------------------------------------------------------
+    | Content Security Policy (CSP)
+    |--------------------------------------------------------------------------
+    |
+    | Configure Content Security Policy headers for enhanced security.
+    |
+    */
+
+    'csp' => [
+        'enabled' => env('CSP_ENABLED', false),
+        'report_only' => env('CSP_REPORT_ONLY', true),
+        'report_uri' => env('CSP_REPORT_URI', '/csp-report'),
     ],
 
     /*
@@ -48,23 +53,23 @@ return [
     | Rate Limiting Configuration
     |--------------------------------------------------------------------------
     |
-    | Enhanced rate limiting settings for production security.
+    | Configure rate limiting for different types of requests.
     |
     */
 
     'rate_limiting' => [
         'enabled' => true,
-        'game_operations' => [
-            'limit' => env('GAME_RATE_LIMIT', 1),
-            'window' => 60, // seconds
-        ],
-        'leaderboard_access' => [
-            'limit' => env('LEADERBOARD_RATE_LIMIT', 10),
-            'window' => 60, // seconds
-        ],
         'api_general' => [
             'limit' => env('THROTTLE_REQUESTS', 60),
             'window' => env('THROTTLE_DECAY_MINUTES', 1) * 60, // convert to seconds
+        ],
+        'auth_attempts' => [
+            'limit' => 5,
+            'window' => 300, // 5 minutes
+        ],
+        'password_resets' => [
+            'limit' => 5,
+            'window' => 3600, // 1 hour
         ],
     ],
 
@@ -78,14 +83,10 @@ return [
     */
 
     'validation' => [
-        'max_name_length' => 50,
-        'max_phone_length' => 20,
-        'min_score' => -999,
-        'max_score' => 999,
-        'allowed_phone_patterns' => [
-            '/^\+?[1-9]\d{1,14}$/', // E.164 format
-            '/^[0-9\-\+\(\)\s]{8,20}$/', // Common formats
-        ],
+        'max_string_length' => 255,
+        'max_text_length' => 65535,
+        'max_file_size' => '10M',
+        'allowed_file_types' => ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'],
     ],
 
     /*
@@ -98,10 +99,10 @@ return [
     */
 
     'session' => [
-        'secure_cookies' => env('SESSION_SECURE_COOKIE', true),
+        'secure_cookies' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
         'http_only' => true,
         'same_site' => 'lax',
-        'encrypt' => env('SESSION_ENCRYPT', true),
+        'encrypt' => env('SESSION_ENCRYPT', env('APP_ENV') === 'production'),
         'lifetime' => env('SESSION_LIFETIME', 120),
         'regenerate_on_login' => true,
     ],
@@ -133,10 +134,32 @@ return [
     */
 
     'uploads' => [
-        'max_file_size' => '2M',
-        'allowed_types' => ['jpg', 'jpeg', 'png', 'gif', 'pdf'],
+        'max_file_size' => '10M',
+        'allowed_types' => ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'],
         'scan_for_viruses' => env('VIRUS_SCAN_ENABLED', false),
         'quarantine_suspicious' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security Headers
+    |--------------------------------------------------------------------------
+    |
+    | Additional security headers to be sent with responses.
+    |
+    */
+
+    'headers' => [
+        'x_frame_options' => 'DENY',
+        'x_content_type_options' => 'nosniff',
+        'x_xss_protection' => '1; mode=block',
+        'referrer_policy' => 'strict-origin-when-cross-origin',
+        'hsts' => [
+            'enabled' => env('APP_ENV') === 'production',
+            'max_age' => 31536000, // 1 year
+            'include_subdomains' => true,
+            'preload' => true,
+        ],
     ],
 
 ];

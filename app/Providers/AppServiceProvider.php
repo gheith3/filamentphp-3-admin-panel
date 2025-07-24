@@ -27,51 +27,39 @@ class AppServiceProvider extends ServiceProvider
         Livewire::setScriptRoute(function ($handle) {
             return Route::get('/vendor/livewire/livewire.js', $handle);
         });
+
         $this->configureRateLimiting();
     }
 
-    public function configureRateLimiting()
+    /**
+     * Configure rate limiting for the application.
+     */
+    public function configureRateLimiting(): void
     {
-         // Configure rate limiter for game operations (store-player and submit-score)
-         RateLimiter::for('game-operations', function (Request $request) {
-            // Identify user by phone number (from request body) or IP address as fallback
-            // $identifier = $request->input('phone') ?: $request->ip();
-            $identifier = $request->ip();
-            
-            // Allow 1 request per minute per user/phone number
-            return Limit::perMinute(1)
-                ->by('game-ops:' . $identifier)
-                ->response(function (Request $request, array $headers) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Too many requests. Please wait 1 minute before trying again.',
-                        'errors' => [
-                            'rate_limit' => ['You can only perform this action once per minute.']
-                        ],
-                        'retry_after' => 60
-                    ], 429, $headers);
-                });
-        });
-
-        // Configure leaderboard rate limiter (more generous for read-only data)
-        RateLimiter::for('leaderboard', function (Request $request) {
-            return Limit::perMinute(10)
-                ->by('leaderboard:' . $request->ip())
-                ->response(function (Request $request, array $headers) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Too many leaderboard requests. Please wait a moment before refreshing again.',
-                        'errors' => [
-                            'rate_limit' => ['You can refresh the leaderboard up to 10 times per minute.']
-                        ],
-                        'retry_after' => 60
-                    ], 429, $headers);
-                });
-        });
-
-        // Configure general API rate limiter (for all other endpoints)
+        // Standard API rate limiter
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->ip());
+        });
+
+        // Auth-based rate limiter for authenticated users
+        RateLimiter::for('auth', function (Request $request) {
+            return $request->user()
+                ? Limit::perMinute(100)->by($request->user()->id)
+                : Limit::perMinute(20)->by($request->ip());
+        });
+
+        // Admin panel rate limiter
+        RateLimiter::for('admin', function (Request $request) {
+            return $request->user()
+                ? Limit::perMinute(200)->by($request->user()->id)
+                : Limit::perMinute(10)->by($request->ip());
+        });
+
+        // File upload rate limiter
+        RateLimiter::for('uploads', function (Request $request) {
+            return $request->user()
+                ? Limit::perHour(50)->by($request->user()->id)
+                : Limit::perHour(5)->by($request->ip());
         });
     }
 }
