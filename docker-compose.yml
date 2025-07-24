@@ -1,0 +1,84 @@
+# Docker Compose for Smart Meter Challenge Backend
+version: '3.8'
+
+services:
+  # Laravel Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8100:80"
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_KEY=~
+      - DB_CONNECTION=mariadb
+      - DB_HOST=database
+      - DB_PORT=3306
+      - DB_DATABASE=admin_panel
+      - DB_USERNAME=root
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=
+      - REDIS_PORT=6379
+    volumes:
+      - .:/var/www/html
+      - ./storage:/var/www/html/storage
+      - backend_logs:/var/log
+    depends_on:
+      - database
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # MariaDB Database
+  database:
+    image: mariadb:10.11
+    environment:
+      - MARIADB_ROOT_PASSWORD=password
+      - MARIADB_DATABASE=admin_panel
+      - MARIADB_USER=admin_panel_user
+      - MARIADB_PASSWORD=password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/docker-init:/docker-entrypoint-initdb.d
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+
+volumes:
+  mysql_data:
+  redis_data:
+  backend_logs:
+
+networks:
+  default:
+    name: admin-panel-backend-network 
