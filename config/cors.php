@@ -20,7 +20,7 @@ return [
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
     'allowed_origins' => env('APP_ENV') === 'production'
-        ? explode(',', env('CORS_ALLOWED_ORIGINS', 'https://smartmeter.example.com'))
+        ? explode(',', env('CORS_ALLOWED_ORIGINS', env('APP_URL')))
         : ['*'], // Development allows all origins
 
     'allowed_origins_patterns' => [],
