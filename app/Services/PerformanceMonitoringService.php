@@ -239,7 +239,7 @@ class PerformanceMonitoringService
         // Use a simple approximation based on memory usage as a proxy
         $memoryUsage = memory_get_usage(true);
         $memoryLimit = $this->getMemoryLimitMB() * 1024 * 1024;
-        
+
         if ($memoryLimit > 0) {
             // Use memory usage as a rough CPU approximation (0-50% range)
             return min(50, round(($memoryUsage / $memoryLimit) * 50, 2));
@@ -274,9 +274,32 @@ class PerformanceMonitoringService
     protected function getActiveConnections(): int
     {
         try {
-            $connections = DB::select('SHOW STATUS LIKE "Threads_connected"');
-            return $connections[0]->Value ?? 0;
+            $driver = config('database.connections.' . config('database.default') . '.driver');
+
+            switch ($driver) {
+                case 'mysql':
+                case 'mariadb':
+                    $connections = DB::select('SHOW STATUS LIKE "Threads_connected"');
+                    return $connections[0]->Value ?? 0;
+
+                case 'pgsql':
+                    $result = DB::select('SELECT count(*) as count FROM pg_stat_activity WHERE state = ?', ['active']);
+                    return $result[0]->count ?? 0;
+
+                case 'sqlite':
+                    // SQLite doesn't have multiple connections in the same way
+                    return 1;
+
+                case 'sqlsrv':
+                    $result = DB::select('SELECT COUNT(*) as count FROM sys.dm_exec_sessions WHERE status = ?', ['running']);
+                    return $result[0]->count ?? 0;
+
+                default:
+                    Log::warning("Active connections count not supported for driver: {$driver}");
+                    return 0;
+            }
         } catch (\Exception $e) {
+            Log::error("Failed to get active connections count", ['error' => $e->getMessage()]);
             return 0;
         }
     }
@@ -301,9 +324,35 @@ class PerformanceMonitoringService
     protected function getSlowQueryCount(): int
     {
         try {
-            $result = DB::select('SHOW STATUS LIKE "Slow_queries"');
-            return $result[0]->Value ?? 0;
+            $driver = config('database.connections.' . config('database.default') . '.driver');
+
+            switch ($driver) {
+                case 'mysql':
+                case 'mariadb':
+                    $result = DB::select('SHOW STATUS LIKE "Slow_queries"');
+                    return $result[0]->Value ?? 0;
+
+                case 'pgsql':
+                    // PostgreSQL doesn't have a built-in slow query counter like MySQL
+                    // You would need to enable slow query logging and parse logs
+                    // For now, return 0 as it requires additional setup
+                    return 0;
+
+                case 'sqlite':
+                    // SQLite doesn't have slow query tracking built-in
+                    return 0;
+
+                case 'sqlsrv':
+                    // SQL Server slow query detection would require querying sys.dm_exec_query_stats
+                    // This is more complex and would need additional configuration
+                    return 0;
+
+                default:
+                    Log::warning("Slow query count not supported for driver: {$driver}");
+                    return 0;
+            }
         } catch (\Exception $e) {
+            Log::error("Failed to get slow query count", ['error' => $e->getMessage()]);
             return 0;
         }
     }
@@ -328,15 +377,51 @@ class PerformanceMonitoringService
     protected function getDatabaseSizeMB(): float
     {
         try {
-            $dbName = config('database.connections.' . config('database.default') . '.database');
-            $result = DB::select("
-                SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb
-                FROM information_schema.tables 
-                WHERE table_schema = ?
-            ", [$dbName]);
+            $connection = config('database.default');
+            $driver = config("database.connections.{$connection}.driver");
+            $dbName = config("database.connections.{$connection}.database");
 
-            return $result[0]->size_mb ?? 0;
+            switch ($driver) {
+                case 'mysql':
+                case 'mariadb':
+                    $result = DB::select("
+                        SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb
+                        FROM information_schema.tables 
+                        WHERE table_schema = ?
+                    ", [$dbName]);
+                    return $result[0]->size_mb ?? 0;
+
+                case 'pgsql':
+                    $result = DB::select("
+                        SELECT ROUND(pg_database_size(?) / 1024.0 / 1024.0, 2) AS size_mb
+                    ", [$dbName]);
+                    return $result[0]->size_mb ?? 0;
+
+                case 'sqlite':
+                    // For SQLite, get file size
+                    $dbPath = config("database.connections.{$connection}.database");
+                    if (file_exists($dbPath)) {
+                        return round(filesize($dbPath) / 1024 / 1024, 2);
+                    }
+                    return 0;
+
+                case 'sqlsrv':
+                    $result = DB::select("
+                        SELECT CAST(SUM(size * 8.0 / 1024 / 1024) AS DECIMAL(10,2)) AS size_mb
+                        FROM sys.master_files 
+                        WHERE database_id = DB_ID(?)
+                    ", [$dbName]);
+                    return $result[0]->size_mb ?? 0;
+
+                default:
+                    Log::warning("Database size calculation not supported for driver: {$driver}");
+                    return 0;
+            }
         } catch (\Exception $e) {
+            Log::error("Failed to calculate database size", [
+                'error' => $e->getMessage(),
+                'driver' => $driver ?? 'unknown'
+            ]);
             return 0;
         }
     }

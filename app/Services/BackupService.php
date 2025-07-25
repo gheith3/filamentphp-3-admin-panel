@@ -98,6 +98,8 @@ class BackupService
                 $this->createMysqlDump($config, $tempPath);
             } elseif ($config['driver'] === 'sqlite') {
                 $this->createSqliteDump($config, $tempPath);
+            } elseif ($config['driver'] === 'pgsql') {
+                $this->createPgsqlDump($config, $tempPath);
             } else {
                 throw new \Exception("Unsupported database driver: {$config['driver']}");
             }
@@ -582,6 +584,271 @@ class BackupService
     }
 
     /**
+     * Check if pg_dump command is available.
+     *
+     * @return bool
+     */
+    protected function isPgDumpAvailable(): bool
+    {
+        $command = PHP_OS_FAMILY === 'Windows' ? 'where pg_dump' : 'which pg_dump';
+        exec($command, $output, $returnCode);
+        return $returnCode === 0;
+    }
+
+    protected function createPgsqlDump(array $config, string $outputPath): void
+    {
+        // Check if pg_dump is available
+        if (!$this->isPgDumpAvailable()) {
+            // Use PHP-based backup as fallback
+            $this->createPgsqlDumpWithPHP($config, $outputPath);
+            return;
+        }
+
+        // Validate required configuration
+        $required = ['host', 'port', 'database', 'username'];
+        foreach ($required as $key) {
+            if (empty($config[$key])) {
+                throw new \Exception("Missing required PostgreSQL configuration: {$key}");
+            }
+        }
+
+        // Set environment variables for PostgreSQL authentication
+        $env = array_merge($_ENV, [
+            'PGHOST' => $config['host'],
+            'PGPORT' => (string) $config['port'],
+            'PGUSER' => $config['username'],
+            'PGPASSWORD' => $config['password'] ?? '',
+            'PGDATABASE' => $config['database'],
+        ]);
+
+        // Build the pg_dump command
+        $command = sprintf(
+            'pg_dump --no-password --format=plain --no-owner --no-privileges %s 2>&1',
+            escapeshellarg($config['database'])
+        );
+
+        // Execute the command with environment variables
+        $descriptorspec = [
+            0 => ['pipe', 'r'],  // stdin
+            1 => ['pipe', 'w'],  // stdout
+            2 => ['pipe', 'w']   // stderr
+        ];
+
+        $process = proc_open($command, $descriptorspec, $pipes, null, $env);
+
+        if (!is_resource($process)) {
+            throw new \Exception("Failed to start pg_dump process");
+        }
+
+        // Close stdin
+        fclose($pipes[0]);
+
+        // Read stdout (the SQL dump)
+        $output = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+
+        // Read stderr (error messages)
+        $errors = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+
+        // Get the exit code
+        $returnCode = proc_close($process);
+
+        if ($returnCode !== 0) {
+            $errorMessage = "Failed to create PostgreSQL dump";
+            if (!empty($errors)) {
+                $errorMessage .= ": " . trim($errors);
+            }
+            if (!empty($output) && strpos($output, 'ERROR') !== false) {
+                $errorMessage .= " | Output: " . trim($output);
+            }
+            throw new \Exception($errorMessage);
+        }
+
+        // Write the dump to file
+        if (file_put_contents($outputPath, $output) === false) {
+            throw new \Exception("Failed to write PostgreSQL dump to file: {$outputPath}");
+        }
+
+        // Verify the dump file was created and has content
+        if (!file_exists($outputPath) || filesize($outputPath) === 0) {
+            throw new \Exception("PostgreSQL dump file is empty or was not created");
+        }
+    }
+
+    /**
+     * Create PostgreSQL dump using PHP (fallback when pg_dump is not available).
+     *
+     * @param array $config
+     * @param string $outputPath
+     * @return void
+     */
+    protected function createPgsqlDumpWithPHP(array $config, string $outputPath): void
+    {
+        try {
+            $dsn = sprintf(
+                'pgsql:host=%s;port=%s;dbname=%s',
+                $config['host'],
+                $config['port'],
+                $config['database']
+            );
+
+            $pdo = new \PDO($dsn, $config['username'], $config['password'], [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            ]);
+
+            $sql = $this->generatePgsqlDumpSQL($pdo, $config['database']);
+
+            if (file_put_contents($outputPath, $sql) === false) {
+                throw new \Exception("Failed to write PostgreSQL dump to file: {$outputPath}");
+            }
+
+        } catch (\PDOException $e) {
+            throw new \Exception("PostgreSQL PHP dump failed: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Generate PostgreSQL dump SQL using PHP.
+     *
+     * @param \PDO $pdo
+     * @param string $database
+     * @return string
+     */
+    protected function generatePgsqlDumpSQL(\PDO $pdo, string $database): string
+    {
+        $sql = "-- PostgreSQL Dump Generated by Laravel Backup Service (PHP Method)\n";
+        $sql .= "-- Date: " . date('Y-m-d H:i:s') . "\n";
+        $sql .= "-- Database: {$database}\n\n";
+        $sql .= "SET statement_timeout = 0;\n";
+        $sql .= "SET lock_timeout = 0;\n";
+        $sql .= "SET client_encoding = 'UTF8';\n";
+        $sql .= "SET standard_conforming_strings = on;\n";
+        $sql .= "SET check_function_bodies = false;\n";
+        $sql .= "SET xmloption = content;\n";
+        $sql .= "SET client_min_messages = warning;\n\n";
+
+        // Get all tables in the public schema
+        $tablesQuery = "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename";
+        $tables = $pdo->query($tablesQuery)->fetchAll(\PDO::FETCH_COLUMN);
+
+        foreach ($tables as $table) {
+            // Skip tables that should be excluded
+            if (in_array($table, config('backup.database.exclude_tables', []))) {
+                continue;
+            }
+
+            $sql .= "-- Table: {$table}\n";
+
+            // Get table schema
+            $createTableSQL = $this->getPgsqlTableSchema($pdo, $table);
+            $sql .= $createTableSQL . "\n\n";
+
+            // Get table data
+            try {
+                $rows = $pdo->query("SELECT * FROM \"{$table}\"")->fetchAll(\PDO::FETCH_ASSOC);
+
+                if (!empty($rows)) {
+                    $sql .= "-- Data for table: {$table}\n";
+
+                    foreach ($rows as $row) {
+                        $columns = array_keys($row);
+                        $values = array_map(function ($value) use ($pdo) {
+                            if ($value === null) {
+                                return 'NULL';
+                            }
+                            return $pdo->quote($value);
+                        }, array_values($row));
+
+                        $sql .= "INSERT INTO \"{$table}\" (\"" . implode('","', $columns) . "\") VALUES (" . implode(',', $values) . ");\n";
+                    }
+                    $sql .= "\n";
+                }
+            } catch (\PDOException $e) {
+                $sql .= "-- Error dumping data for table {$table}: " . $e->getMessage() . "\n\n";
+            }
+        }
+
+        // Get sequences
+        $sequencesQuery = "SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public'";
+        try {
+            $sequences = $pdo->query($sequencesQuery)->fetchAll(\PDO::FETCH_COLUMN);
+
+            if (!empty($sequences)) {
+                $sql .= "-- Sequences\n";
+                foreach ($sequences as $sequence) {
+                    $currentValue = $pdo->query("SELECT last_value FROM \"{$sequence}\"")->fetchColumn();
+                    $sql .= "SELECT setval('\"{$sequence}\"', {$currentValue}, true);\n";
+                }
+                $sql .= "\n";
+            }
+        } catch (\PDOException $e) {
+            $sql .= "-- Error dumping sequences: " . $e->getMessage() . "\n\n";
+        }
+
+        return $sql;
+    }
+
+    /**
+     * Get PostgreSQL table schema.
+     *
+     * @param \PDO $pdo
+     * @param string $table
+     * @return string
+     */
+    protected function getPgsqlTableSchema(\PDO $pdo, string $table): string
+    {
+        try {
+            // Get columns information
+            $columnsQuery = "
+                SELECT 
+                    column_name,
+                    data_type,
+                    character_maximum_length,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns 
+                WHERE table_name = ? AND table_schema = 'public'
+                ORDER BY ordinal_position
+            ";
+
+            $stmt = $pdo->prepare($columnsQuery);
+            $stmt->execute([$table]);
+            $columns = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $createSQL = "CREATE TABLE IF NOT EXISTS \"{$table}\" (\n";
+            $columnDefinitions = [];
+
+            foreach ($columns as $column) {
+                $columnDef = "    \"{$column['column_name']}\" {$column['data_type']}";
+
+                if ($column['character_maximum_length']) {
+                    $columnDef .= "({$column['character_maximum_length']})";
+                }
+
+                if ($column['is_nullable'] === 'NO') {
+                    $columnDef .= " NOT NULL";
+                }
+
+                if ($column['column_default']) {
+                    $columnDef .= " DEFAULT {$column['column_default']}";
+                }
+
+                $columnDefinitions[] = $columnDef;
+            }
+
+            $createSQL .= implode(",\n", $columnDefinitions);
+            $createSQL .= "\n);";
+
+            return $createSQL;
+
+        } catch (\PDOException $e) {
+            return "-- Error getting schema for table {$table}: " . $e->getMessage();
+        }
+    }
+
+    /**
      * Create SQLite dump.
      *
      * @param array $config
@@ -608,6 +875,8 @@ class BackupService
         // Fallback to PHP-based SQLite dump (works on Windows)
         $this->createSqliteDumpWithPHP($config, $outputPath);
     }
+
+
 
     /**
      * Check if sqlite3 command is available.

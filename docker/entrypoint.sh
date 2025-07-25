@@ -3,13 +3,27 @@
 # Laravel Docker Entrypoint Script
 echo "🚀 Starting Smart Meter Challenge Backend..."
 
-# Wait for database if using external database
-if [ "$DB_CONNECTION" = "mysql" ] && [ -n "$DB_HOST" ]; then
+
+
+if [ "$DB_CONNECTION" != "sqlite" ] && [ -n "$DB_HOST" ]; then
     echo "⏳ Waiting for database connection..."
-    until nc -z "$DB_HOST" "${DB_PORT:-3306}"; do
-        echo "Database not ready - sleeping..."
-        sleep 2
-    done
+    if [ "$DB_CONNECTION" = "pgsql" ]; then
+        until pg_isready -h "$DB_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE"; do
+            echo "PostgreSQL not ready - sleeping..."
+            sleep 2
+        done
+    elif [ "$DB_CONNECTION" = "mysql" ] || [ "$DB_CONNECTION" = "mariadb" ]; then
+        until mysqladmin ping -h"$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" --silent; do
+            echo "MySQL/MariaDB not ready - sleeping..."
+            sleep 2
+        done
+    elif [ "$DB_CONNECTION" = "sqlsrv" ]; then
+        # Try to connect to SQL Server using sqlcmd if available
+        until sqlcmd -S "$DB_HOST,$DB_PORT" -U "$DB_USERNAME" -P "$DB_PASSWORD" -Q "SELECT 1" >/dev/null 2>&1; do
+            echo "SQL Server not ready - sleeping..."
+            sleep 2
+        done
+    fi
     echo "✅ Database connection established"
 fi
 

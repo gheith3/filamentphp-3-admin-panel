@@ -10,6 +10,7 @@ RUN apk add --no-cache \
     unzip \
     git \
     mysql-client \
+    postgresql-client \
     sqlite \
     sqlite-dev \
     nodejs \
@@ -20,6 +21,7 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
+    postgresql-dev \
     autoconf \
     g++ \
     make \
@@ -29,6 +31,7 @@ RUN apk add --no-cache \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
     pdo_mysql \
+    pdo_pgsql \
     pdo_sqlite \
     gd \
     zip \
